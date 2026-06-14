@@ -3,7 +3,7 @@ name: 从上游同步 xiaosa
 on:
   workflow_dispatch:
   schedule:
-    - cron: "20 22 * * *"   # 北京时间 06:20 运行
+    - cron: "20 22 * * *"
 
 jobs:
   sync:
@@ -14,25 +14,32 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 使用 git clone 完整拉取上游
+      - name: 完整拉取上游仓库
         run: |
-          git clone --depth 1 --branch master https://github.com/qist/tvbox.git ./upstream_temp
+          # 删除可能存在的旧目录
+          rm -rf ./upstream_temp
+          # 完整克隆（不使用 depth）
+          git clone https://github.com/qist/tvbox.git ./upstream_temp
+          cd ./upstream_temp
+          git checkout master
+          cd ..
 
-      - name: 确认 xiaosa 目录存在
+      - name: 确认并复制文件
         run: |
-          if [ -d "./upstream_temp/xiaosa" ]; then
-            echo "✅ xiaosa 目录存在"
-          else
-            echo "❌ xiaosa 目录不存在"
-            exit 1
-          fi
-
-      - name: 复制文件到我的仓库
-        run: |
+          echo "=== xiaosa 目录内容 ==="
+          ls -la ./upstream_temp/xiaosa/
+          
+          # 清空当前目录（保留 .git）
           find . -maxdepth 1 ! -name '.' ! -name '.git' ! -name '.github' -exec rm -rf {} +
+          
+          # 复制 xiaosa 目录下所有内容
           cp -r ./upstream_temp/xiaosa/* .
           cp -r ./upstream_temp/xiaosa/.[!.]* . 2>/dev/null || true
+          
+          # 清理
           rm -rf ./upstream_temp
+          
+          echo "=== 同步完成 ==="
           ls -la
 
       - name: 提交并推送
