@@ -1,54 +1,48 @@
 name: 从上游同步 xiaosa
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "20 6 * * *"   # 每天 UTC 06:20 (北京时间 06:20)
-  workflow_dispatch:        # 手动触发
+    - cron: "20 22 * * *"   # 北京时间 06:20 运行
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # 1. 检出你自己的仓库
       - name: 检出我的仓库
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. 检出上游 qist/tvbox 仓库 (master 分支)
-      - name: 检出上游仓库
-        uses: actions/checkout@v4
-        with:
-          repository: qist/tvbox
-          ref: master          # 明确使用 master 分支
-          path: ./upstream_temp
-
-      # 3. 同步文件 (修正后的复制命令)
-      - name: 复制上游 xiaosa 目录内容
+      - name: 使用 git clone 完整拉取上游
         run: |
-          # 删除你仓库当前所有内容（保留 .git 和 .github 隐藏目录）
+          git clone --depth 1 --branch master https://github.com/qist/tvbox.git ./upstream_temp
+
+      - name: 确认 xiaosa 目录存在
+        run: |
+          if [ -d "./upstream_temp/xiaosa" ]; then
+            echo "✅ xiaosa 目录存在"
+          else
+            echo "❌ xiaosa 目录不存在"
+            exit 1
+          fi
+
+      - name: 复制文件到我的仓库
+        run: |
           find . -maxdepth 1 ! -name '.' ! -name '.git' ! -name '.github' -exec rm -rf {} +
-          
-          # 复制上游 xiaosa 目录下的全部内容到当前根目录
-          # 关键修正：使用 . 代替 * 来包含隐藏文件
-          cp -r ./upstream_temp/xiaosa/. .
-          
-          # 清理临时目录
+          cp -r ./upstream_temp/xiaosa/* .
+          cp -r ./upstream_temp/xiaosa/.[!.]* . 2>/dev/null || true
           rm -rf ./upstream_temp
-          
-          # 验证结果
-          echo "✅ 同步完成，当前目录内容："
           ls -la
 
-      # 4. 提交并推送更新
-      - name: 提交更新
+      - name: 提交并推送
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           if git diff --cached --quiet; then
-            echo "没有新变化，无需提交"
+            echo "没有变化"
           else
-            git commit -m "🔄 自动同步上游 xiaosa $(date '+%Y-%m-%d %H:%M')"
+            git commit -m "🔄 同步上游 xiaosa $(date '+%Y-%m-%d %H:%M')"
             git push origin master
           fi
