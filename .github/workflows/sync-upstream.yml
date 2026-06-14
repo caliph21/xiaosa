@@ -16,21 +16,33 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 下载上游 xiaosa 目录
+      - name: 下载并同步到 tvbox 目录
         run: |
+          # 下载上游
           curl -L https://github.com/qist/tvbox/archive/master.zip -o master.zip
           unzip -q master.zip
-          find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} \; 2>/dev/null || true
-          cp -r tvbox-master/xiaosa/* . 2>/dev/null || true
-          cp -r tvbox-master/xiaosa/.[!.]* . 2>/dev/null || true
+          
+          # 删除旧的 tvbox 目录（如果存在）
+          rm -rf tvbox
+          
+          # 创建新的 tvbox 目录
+          mkdir tvbox
+          
+          # 复制 xiaosa 内容到 tvbox 目录
+          cp -r tvbox-master/xiaosa/* tvbox/ 2>/dev/null || true
+          cp -r tvbox-master/xiaosa/.[!.]* tvbox/ 2>/dev/null || true
+          
+          # 清理
           rm -rf master.zip tvbox-master
-          ls -la
+          
+          echo "✅ tvbox 目录同步完成"
+          ls -la tvbox/
 
       - name: 提交并推送
         run: |
           git config user.name "github-actions[bot]"
-          git config.user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tvbox
           if git diff --cached --quiet; then
             echo "没有变化"
           else
