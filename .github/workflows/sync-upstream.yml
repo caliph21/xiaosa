@@ -3,7 +3,7 @@ name: 从上游同步 xiaosa
 on:
   workflow_dispatch:
   schedule:
-    - cron: "20 06 * * *"
+    - cron: "20 22 * * *"
 
 jobs:
   sync:
@@ -14,23 +14,28 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 下载上游 xiaosa 目录
+      - name: 完整拉取上游仓库
         run: |
-          # 直接下载 GitHub 上的压缩包
-          curl -L https://github.com/qist/tvbox/archive/master.zip -o upstream.zip
-          unzip upstream.zip
+          rm -rf ./upstream_temp
+          git clone --depth 1 --branch master https://github.com/qist/tvbox.git ./upstream_temp
+
+      - name: 同步文件
+        run: |
+          # 先复制，再清空当前目录（调整顺序）
+          # 将上游 xiaosa 内容先复制到一个临时目录
+          mkdir -p ./new_content
+          cp -r ./upstream_temp/xiaosa/. ./new_content/
           
-          # 清空当前目录（保留 .git 和 .github）
-          find . -maxdepth 1 ! -name '.' ! -name '.git' ! -name '.github' -exec rm -rf {} +
+          # 清空当前目录（保留 .git）
+          find . -maxdepth 1 ! -name '.' ! -name '.git' -exec rm -rf {} +
           
-          # 从解压的文件夹中复制 xiaosa 内容
-          cp -r tvbox-master/xiaosa/* .
-          cp -r tvbox-master/xiaosa/.[!.]* . 2>/dev/null || true
+          # 将新内容复制回来
+          cp -r ./new_content/. .
           
           # 清理
-          rm -rf upstream.zip tvbox-master
+          rm -rf ./upstream_temp ./new_content
           
-          echo "=== 同步完成 ==="
+          echo "✅ 同步完成"
           ls -la
 
       - name: 提交并推送
