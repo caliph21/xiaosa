@@ -14,28 +14,23 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 完整拉取上游仓库
+      - name: 下载上游 xiaosa 目录
         run: |
-          rm -rf ./upstream_temp
-          git clone --depth 1 --branch master https://github.com/qist/tvbox.git ./upstream_temp
-
-      - name: 同步文件
-        run: |
-          # 先复制，再清空当前目录（调整顺序）
-          # 将上游 xiaosa 内容先复制到一个临时目录
-          mkdir -p ./new_content
-          cp -r ./upstream_temp/xiaosa/. ./new_content/
+          # 下载并解压
+          curl -L https://github.com/qist/tvbox/archive/master.zip -o master.zip
+          unzip -q master.zip
           
-          # 清空当前目录（保留 .git）
-          find . -maxdepth 1 ! -name '.' ! -name '.git' -exec rm -rf {} +
+          # 删除当前目录所有文件（保留 .git 文件夹）
+          find . -maxdepth 1 -not -name '.git' -not -name '.' -exec rm -rf {} \; 2>/dev/null || true
           
-          # 将新内容复制回来
-          cp -r ./new_content/. .
+          # 复制 xiaosa 内容
+          cp -r tvbox-master/xiaosa/* . 2>/dev/null || true
+          cp -r tvbox-master/xiaosa/.[!.]* . 2>/dev/null || true
           
           # 清理
-          rm -rf ./upstream_temp ./new_content
+          rm -rf master.zip tvbox-master
           
-          echo "✅ 同步完成"
+          echo "当前文件列表："
           ls -la
 
       - name: 提交并推送
