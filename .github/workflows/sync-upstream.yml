@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: 下载并同步到 xiaosa目录
         run: |
@@ -46,3 +47,20 @@ jobs:
             git commit -m "🔄 同步上游 xiaosa $(date '+%Y-%m-%d %H:%M')"
             git push origin main
           fi
+
+  # 新增：同步完成后触发 Merge_jar.yml
+  trigger-merge:
+    needs: sync
+    if: success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: 触发 Merge JAR
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/Merge_jar.yml/dispatches \
+            -d '{"ref":"main"}'
