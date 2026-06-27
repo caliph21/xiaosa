@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
     outputs:
-      changed: ${{ steps.check.outputs.changed }}
+      changed: ${{ steps.check_changes.outputs.changed }}   # ✅ 改成 check_changes
     steps:
       - name: 检出我的仓库
         uses: actions/checkout@v4
@@ -20,21 +20,12 @@ jobs:
           fetch-depth: 0
 
       - name: 下载并同步到 xiaosa目录
-        id: check
         run: |
-          # 下载上游仓库
           curl -L https://github.com/qist/tvbox/archive/master.zip -o master.zip
           unzip -q master.zip
-          
-          # 删除旧的 xiaosa目录（如果存在）
           rm -rf xiaosa
-                   
-          # 直接重命名上游的 xiaosa 目录，保证完全一致（无残留文件）
           mv tvbox-master/xiaosa xiaosa
-          
-          # 清理下载的临时文件
           rm -rf master.zip tvbox-master
-          
           echo "✅ xiaosa 目录同步完成"
           ls -la xiaosa/
 
@@ -58,7 +49,6 @@ jobs:
           git commit -m "🔄 同步上游 xiaosa $(date '+%Y-%m-%d %H:%M')"
           git push origin main
 
-  # 只有 sync 有变化时才触发
   trigger-merge:
     needs: sync
     if: needs.sync.outputs.changed == 'true'
