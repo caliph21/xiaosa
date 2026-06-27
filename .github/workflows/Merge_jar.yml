@@ -25,9 +25,11 @@ jobs:
         
     - name: Download dex2jar
       run: |
+        cd xiaosa
         wget https://github.com/pxb1988/dex2jar/releases/download/v2.4/dex-tools-v2.4.zip
-        unzip dex-tools-v2.4.zip -d dex2jar
-        chmod +x dex2jar/dex-tools-v2.4/*.sh
+        unzip dex-tools-v2.4.zip
+        chmod +x dex-tools-v2.4/*.sh
+        ls -la dex-tools-v2.4/
         
     - name: Merge and replace
       run: |
@@ -45,7 +47,7 @@ jobs:
         jar xf "../$SPIDER_JAR"
         
         if [ -f "classes.dex" ]; then
-          ../dex2jar/dex-tools-v2.4/d2j-dex2jar.sh classes.dex -o spider-converted.jar
+          ../dex-tools-v2.4/d2j-dex2jar.sh classes.dex -o spider-converted.jar
           jar xf spider-converted.jar
           
           if [ -d "com/github/catvod" ]; then
