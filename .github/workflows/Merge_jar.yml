@@ -25,60 +25,42 @@ jobs:
         
     - name: Download dex2jar
       run: |
-        wget https://github.com/pxb1988/dex2jar/releases/download/2.4/dex-tools-2.4.zip
-        unzip dex-tools-2.4.zip -d dex2jar
-        chmod +x dex2jar/*.sh
+        wget https://github.com/pxb1988/dex2jar/releases/download/2.1.1/dex-tools-2.1.1.zip
+        unzip dex-tools-2.1.1.zip -d dex2jar
+        chmod +x dex2jar/dex-tools-2.1.1/*.sh
         
     - name: Merge and replace
       run: |
         cd xiaosa
         
-        # 自动查找 jar 文件
         SPIDER_JAR=$(find . -name "spider.jar" -type f | head -1)
         BXS_JAR=$(find . -name "BXS.jar" -type f | head -1)
         
         echo "Found spider.jar: $SPIDER_JAR"
         echo "Found BXS.jar: $BXS_JAR"
         
-        # 先用 dex2jar 转换 spider.jar
         mkdir -p temp
         cd temp
         
-        # 解压 spider.jar 得到 classes.dex
         jar xf "../$SPIDER_JAR"
         
-        # 用 dex2jar 转换 classes.dex 为 jar
         if [ -f "classes.dex" ]; then
-          echo "Converting classes.dex to jar..."
-          ../dex2jar/d2j-dex2jar.sh classes.dex -o spider-converted.jar
-          
-          # 解压转换后的 jar
+          ../dex2jar/dex-tools-2.1.1/d2j-dex2jar.sh classes.dex -o spider-converted.jar
           jar xf spider-converted.jar
           
-          # 检查 com/github/catvod
           if [ -d "com/github/catvod" ]; then
-            echo "✅ Found com/github/catvod"
-            # 添加到 BXS.jar
             jar uf "../$BXS_JAR" com/github/catvod
           else
-            echo "❌ com/github/catvod not found"
             exit 1
           fi
         else
-          echo "❌ classes.dex not found"
           exit 1
         fi
         
         cd ..
-        
-        # 清理
         rm -rf temp
-        
-        # 替换
         rm -f "$SPIDER_JAR"
         cp "$BXS_JAR" "$SPIDER_JAR"
-        
-        echo "✅ Replacement completed"
         
     - name: Commit and push
       run: |
