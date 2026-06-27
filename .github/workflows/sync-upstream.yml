@@ -24,7 +24,9 @@ jobs:
           
           # 删除旧的 xiaosa目录（如果存在）
           rm -rf xiaosa
+          
           rm -rf tvbox
+          
           # 直接重命名上游的 xiaosa 目录，保证完全一致（无残留文件）
           mv tvbox-master/xiaosa xiaosa
           
