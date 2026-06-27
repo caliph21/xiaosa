@@ -26,10 +26,6 @@ jobs:
       run: |
         cd xiaosa
         
-        # 现在在 /home/runner/work/xiaosa/xiaosa/
-        # BXS.jar 在这里
-        # spider.jar 在 xiaosa/spider.jar
-        
         # 解压 spider.jar
         mkdir -p temp
         cd temp
@@ -38,8 +34,10 @@ jobs:
         # 回到根目录
         cd ..
         
-        # 添加到 BXS.jar
-        jar uf BXS.jar -C temp com/github/catvod
+        # 进入 temp 目录，然后添加 com/github/catvod 到 BXS.jar
+        cd temp
+        jar uf ../BXS.jar com/github/catvod
+        cd ..
         
         # 清理
         rm -rf temp
