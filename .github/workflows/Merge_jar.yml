@@ -26,19 +26,25 @@ jobs:
       run: |
         cd xiaosa
         
-        # 解压 spider.jar (路径: xiaosa/xiaosa/spider.jar)
+        # 现在在 /home/runner/work/xiaosa/xiaosa/
+        # BXS.jar 在这里
+        # spider.jar 在 xiaosa/spider.jar
+        
+        # 解压 spider.jar
         mkdir -p temp
         cd temp
         jar xf ../xiaosa/spider.jar
         
-        # 将 com/github/catvod/spider 添加到 BXS.jar (路径: xiaosa/BXS.jar)
+        # 回到根目录
         cd ..
-        jar uf BXS.jar -C temp com/github/catvod/spider
+        
+        # 添加到 BXS.jar
+        jar uf BXS.jar -C temp com/github/catvod
         
         # 清理
         rm -rf temp
         
-        # 替换 spider.jar
+        # 替换
         mv xiaosa/spider.jar xiaosa/spider-backup.jar
         cp BXS.jar xiaosa/spider.jar
         
