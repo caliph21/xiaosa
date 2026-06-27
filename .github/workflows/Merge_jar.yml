@@ -1,1 +1,83 @@
-1
+name: Merge JAR Files
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  merge-jars:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        repository: caliph21/xiaosa
+        path: xiaosa
+        
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+        
+    - name: Debug - Check files
+      run: |
+        cd xiaosa
+        echo "=== Current directory ==="
+        pwd
+        echo "=== Files in root ==="
+        ls -la
+        echo "=== Files in xiaosa/ ==="
+        ls -la xiaosa/
+        echo "=== Check spider.jar exists ==="
+        ls -la xiaosa/spider.jar
+        
+    - name: Merge and replace
+      run: |
+        cd xiaosa
+        
+        # 解压 spider.jar
+        mkdir -p temp
+        cd temp
+        
+        echo "=== Current directory for extract ==="
+        pwd
+        echo "=== Extracting spider.jar from ../xiaosa/spider.jar ==="
+        jar xf ../xiaosa/spider.jar
+        
+        echo "=== Check what was extracted ==="
+        ls -la
+        ls -la com/ 2>/dev/null || echo "com/ not found"
+        ls -la com/github/ 2>/dev/null || echo "com/github not found"
+        ls -la com/github/catvod/ 2>/dev/null || echo "com/github/catvod not found"
+        
+        # 如果找到了，就添加
+        if [ -d "com/github/catvod" ]; then
+          echo "✅ Found com/github/catvod"
+          jar uf ../BXS.jar com/github/catvod
+        else
+          echo "❌ com/github/catvod not found"
+          exit 1
+        fi
+        
+        cd ..
+        
+        # 清理
+        rm -rf temp
+        
+        # 替换
+        mv xiaosa/spider.jar xiaosa/spider-backup.jar
+        cp BXS.jar xiaosa/spider.jar
+        
+    - name: Commit
+      run: |
+        cd xiaosa
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add xiaosa/spider.jar
+        git commit -m "Update spider.jar" || echo "No changes"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
