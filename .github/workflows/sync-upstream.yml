@@ -19,7 +19,7 @@ jobs:
 
       - name: 下载并同步到 xiaosa目录
         run: |
-          rm -rf tvbox
+          # rm -rf tvbox
           # 下载上游仓库
           curl -L https://github.com/qist/tvbox/archive/master.zip -o master.zip
           unzip -q master.zip
